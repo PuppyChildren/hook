@@ -1,4 +1,8 @@
+////////////////////////////////////////////////////////////////////////
+// AfxMessageBoxEx
+////////////////////////////////////////////////////////////////////////
 HHOOK g_HookHandle;
+int g_PosX, g_PosY, g_Width, g_Height;
 
 LRESULT CALLBACK cbHookMsgBox(int nCode, WPARAM wParam, LPARAM lParam);
 int AfxMessageBoxEx(LPCSTR message , UINT nType);
@@ -13,21 +17,25 @@ LRESULT CALLBACK cbHookMsgBox (int nCode, WPARAM wParam ,LPARAM lParam )
 			WINDOWINFO winf;
 			winf.cbSize = sizeof(winf);
 			wnd->GetWindowInfo(&winf);
-			if ((winf.dwStyle & WS_POPUPWINDOW) == WS_POPUPWINDOW)
-			{
-				wnd->SetWindowPos(NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-			}
+			// change position
+			wnd->SetWindowPos(NULL, g_PosX, g_PosY, g_Width, g_Height, SWP_NOSIZE | SWP_NOZORDER);
+			// unhook
+			ret = UnhookWindowsHookEx(g_HookHandle);
 			break;
 		}
 	}
 	HRESULT ret;
-	// アンインストール
-	ret = UnhookWindowsHookEx(g_HookHandle);
-	
+		
 	return CallNextHookEx(g_HookHandle, nCode, wParam, lParam);
 }
-int AfxMessageBoxEx(LPCSTR message, UINT nType)
+int AfxMessageBoxEx(LPCSTR message, UINT nType, int x, int y, int cx, int cy)
 {
+	// set position
+	g_PosX = x;
+	g_PosY = y;
+	g_Width = cx;
+	g_Height = cy;
+	// hook
 	g_HookHandle = SetWindowsHookEx(WH_CBT, cbHookMsgBox, NULL, GetCurrentThreadId()); 
 	return (AfxMessageBox(message, nType)); 
 }
